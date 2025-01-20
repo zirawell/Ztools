@@ -1,5 +1,6 @@
 package com.zlog.config.generator;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,11 +45,11 @@ public class SurgeConfigGenerator {
                 boolean webPathFlag = false;
                 HashSet<String> tmpAppPaths = new HashSet<>();
                 for (File subFile : subFiles) {
-                    if (!subFile.getAbsolutePath().contains(".DS_Store")) {
+                    if (!subFile.getAbsolutePath().contains(ConfigGeneratorConstants.MACOS_FILE_SIGN)) {
                         tmpAppPaths.add(subFile.getAbsolutePath());
                     }else{
                         if(subFile.delete()){
-                            System.out.println(subFile.getAbsolutePath() + "is deleted!");
+                            System.out.println(subFile.getAbsolutePath() + " has been deleted!");
                         }
                     }
                     // 寻找含有README.md的Adblock目录
@@ -60,15 +61,15 @@ public class SurgeConfigGenerator {
                         if (subFile.getAbsolutePath().contains(ConfigGeneratorUtils.capitalizeFirstLetter(ConfigGeneratorConstants.APP_SIGN) + ConfigGeneratorConstants.FILE_SEPARATOR)
                                 && subFile.getAbsolutePath().split(ConfigGeneratorConstants.FILE_SEPARATOR).length == ConfigGeneratorConstants.APP_LEVEL) {
                             appPathFlag = true;
-                            // 收录微信小程序
+                        // 收录微信小程序
                         } else if (subFile.getAbsolutePath().contains(ConfigGeneratorUtils.capitalizeFirstLetter(ConfigGeneratorConstants.WECHAT_SIGN) + ConfigGeneratorConstants.FILE_SEPARATOR)
                                 && subFile.getAbsolutePath().split(ConfigGeneratorConstants.FILE_SEPARATOR).length == ConfigGeneratorConstants.APPLET_LEVEL) {
                             wechatAppletPathFlag = true;
-                            // 收录支付宝小程序
+                        // 收录支付宝小程序
                         } else if (subFile.getAbsolutePath().contains(ConfigGeneratorUtils.capitalizeFirstLetter(ConfigGeneratorConstants.ALIPAY_SIGN) + ConfigGeneratorConstants.FILE_SEPARATOR)
                                 && subFile.getAbsolutePath().split(ConfigGeneratorConstants.FILE_SEPARATOR).length == ConfigGeneratorConstants.APPLET_LEVEL) {
                             alipayAppletPathFlag = true;
-                            // 收录网站
+                        // 收录网站
                         } else if (subFile.getAbsolutePath().contains(ConfigGeneratorUtils.capitalizeFirstLetter(ConfigGeneratorConstants.WEB_SIGN) + ConfigGeneratorConstants.FILE_SEPARATOR)
                                 && subFile.getAbsolutePath().split(ConfigGeneratorConstants.FILE_SEPARATOR).length == ConfigGeneratorConstants.WEB_LEVEL) {
                             webPathFlag = true;
@@ -81,13 +82,13 @@ public class SurgeConfigGenerator {
                 // 各app路径
                 if (appPathFlag) {
                     appPaths.addAll(tmpAppPaths);
-                    // 微信小程序路径
+                // 微信小程序路径
                 } else if (wechatAppletPathFlag) {
                     wechatAppletPaths.addAll(tmpAppPaths);
-                    // 支付宝小程序路径
+                // 支付宝小程序路径
                 } else if (alipayAppletPathFlag) {
                     alipayAppletPaths.addAll(tmpAppPaths);
-                    // 网站路径
+                // 网站路径
                 } else if (webPathFlag) {
                     webPaths.addAll(tmpAppPaths);
                 }
@@ -95,6 +96,9 @@ public class SurgeConfigGenerator {
         }
     }
 
+    /**
+     * 生成配置文件
+     */
     public static void generateConfigs() {
         try {
             getOriginalFilePaths(quanXRuleDir);
@@ -156,6 +160,16 @@ public class SurgeConfigGenerator {
     }
 
     /**
+     * 通过Rewrite文件路径获取Filter文件
+     * @param path QuanX Rewrite文件路径
+     * @return File Filter文件
+     */
+    private static File getFilterFile(String path){
+        return new File(path.replace(ConfigGeneratorConstants.REWRITE_SIGN, ConfigGeneratorConstants.FILTER_SIGN)
+                            .replace(ConfigGeneratorConstants.CONF_SIGN,ConfigGeneratorConstants.LIST_SIGN));
+    }
+
+    /**
      * 获取特殊处理标识
      * @param path QuanX路径
      * @return boolean
@@ -176,25 +190,40 @@ public class SurgeConfigGenerator {
      */
     private static void generateConfigFile(String path) {
         File originDir = new File(path);
+        String generatedConfigPath;
         File[] subFiles = originDir.listFiles();
         if (null != subFiles) {
-            for (File subFile : subFiles) {
-                generateSurgeConfigFile(subFile);
-                if (subFile.getAbsolutePath().contains(ConfigGeneratorConstants.REWRITE_SIGN)) {
-                    processRewriteFile(subFile);
-                } else if (subFile.getAbsolutePath().contains(ConfigGeneratorConstants.FILTER_SIGN)) {
-                    processFilterFile(subFile);
+            if(path.contains(ConfigGeneratorConstants.ADBLOCK_SIGN)) {
+                generatedConfigPath = generateSurgeConfigFileForAdblock(originDir);
+                File rewriteDir = new File(path + ConfigGeneratorConstants.FILE_SEPARATOR + ConfigGeneratorConstants.REWRITE_SIGN);
+                File filterDir = new File(path + ConfigGeneratorConstants.FILE_SEPARATOR + ConfigGeneratorConstants.FILTER_SIGN);
+                boolean stopFlag = false;
+                // 打印文件路径
+                //System.out.println(path);
+                if (rewriteDir.exists() && Objects.requireNonNull(rewriteDir.listFiles()).length > 0) {
+                    stopFlag = processRewriteContent(Objects.requireNonNull(rewriteDir.listFiles())[0]);
                 }
-            }
-            for (String generatedConfigPath : generatedConfigPaths) {
-                StringBuilder fileContent = new StringBuilder();
-                StringBuilder header = headerMap.get(generatedConfigPath);
-                StringBuilder content = contentMap.get(generatedConfigPath);
-                fileContent.append(null == header ? "" : header).append(System.lineSeparator()).append(null == content ? "" : content);
-                try {
-                    ConfigGeneratorUtils.writeToFile(new File(generatedConfigPath), fileContent.toString(), false);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                if (filterDir.exists() && Objects.requireNonNull(filterDir.listFiles()).length > 0 && !stopFlag) {
+                    processFilterContent(Objects.requireNonNull(filterDir.listFiles())[0], false);
+                }
+                // 输出Surge配置文件
+                writeSurgeConfigFile(generatedConfigPath);
+
+            }else{
+                for (File subFile : subFiles) {
+                    if (subFile.isDirectory()) {
+                        generateConfigFile(subFile.getAbsolutePath());
+                    } else {
+                        generatedConfigPath = generateSurgeConfigFileForAdblock(subFile);
+                        String pathName = subFile.getAbsolutePath();
+                        if (pathName.endsWith(ConfigGeneratorConstants.LIST_SIGN)) {
+                            processFilterContent(subFile, true);
+                        }else if(pathName.endsWith(ConfigGeneratorConstants.CONF_SIGN)){
+                            processRewriteContent(subFile);
+                        }
+                        writeSurgeConfigFile(generatedConfigPath);
+                    }
+
                 }
             }
         }
@@ -202,16 +231,36 @@ public class SurgeConfigGenerator {
     }
 
     /**
+     * 写入Surge配置文件
+     * @param generatedConfigPath Surge配置文件路径
+     */
+    private static void writeSurgeConfigFile(String generatedConfigPath) {
+        if (!generatedConfigPaths.contains(generatedConfigPath)) {
+            headerMap.clear();
+            contentMap.clear();
+            return;
+        }
+        StringBuilder fileContent = new StringBuilder();
+        StringBuilder header = headerMap.get(generatedConfigPath);
+        StringBuilder content = contentMap.get(generatedConfigPath);
+        fileContent.append(null == header ? "" : header).append(System.lineSeparator()).append(null == content ? "" : content);
+        ConfigGeneratorUtils.writeToFile(new File(generatedConfigPath), fileContent.toString(), false);
+        headerMap.clear();
+        contentMap.clear();
+    }
+
+    /**
      * 生成Surge配置空文件
      * @param subFile QuanX配置文件目录或文件
      */
-    private static void generateSurgeConfigFile(File subFile) {
+    private static String generateSurgeConfigFileForAdblock(File subFile) {
+        File targetFile = null;
         if(subFile.isDirectory()){
             if (null != subFile.listFiles() && Objects.requireNonNull(subFile.listFiles()).length != 0) {
-                generateSurgeConfigFile(Objects.requireNonNull(subFile.listFiles())[0]);
+                return generateSurgeConfigFileForAdblock(Objects.requireNonNull(subFile.listFiles())[0]);
             }
         }else{
-            File targetFile = getSurgeModuleFile(subFile.getAbsolutePath());
+            targetFile = getSurgeModuleFile(subFile.getAbsolutePath());
             try {
                 if(replaceFile(targetFile)){
                     generatedConfigPaths.add(targetFile.getAbsolutePath());
@@ -220,70 +269,204 @@ public class SurgeConfigGenerator {
                 System.out.println("Failed to generate file: " + targetFile.getAbsolutePath());
                 throw new RuntimeException(e);
             }
+
         }
+        assert targetFile != null;
+        return targetFile.getAbsolutePath();
     }
 
-    /**
-     * 处理重写文件
-     *
-     * @param subFile 重写文件
-     */
-    private static void processRewriteFile(File subFile) {
-        ///Users/zirawell/Git/R-Store/Rule/QuanX/Adblock/Applet/Wechat/#/rewrite/wechatAppletGeneralRewrite.conf
-        ///Users/zirawell/Git/R-Store/Rule/QuanX/Adblock/Applet/Wechat/X/享道出行/rewrite
-        if(subFile.getAbsolutePath().endsWith(ConfigGeneratorConstants.CONF_SIGN)){
-            //processRewriteContent(subFile);
-        }else{
-            if (null != subFile.listFiles() && Objects.requireNonNull(subFile.listFiles()).length != 0) {
-                processRewriteFile(Objects.requireNonNull(subFile.listFiles())[0]);
-            }
-        }
 
-    }
 
     /**
      * 处理重写文件内容
      * @param subFile 原始重写文件
      */
-    private static void processRewriteContent(File subFile) {
+    private static boolean processRewriteContent(File subFile) {
         // 目标文件路径
         File targetFile;
+        File filterFile;
         targetFile = getSurgeModuleFile(subFile.getAbsolutePath());
+        filterFile = getFilterFile(subFile.getAbsolutePath());
+        boolean flag = false;
         try {
-            // 1. 读取源文件内容
+            // 文件内容（不包含注释）
             StringBuilder fileContent = new StringBuilder();
+            // 注释内容
             StringBuilder commentContent = new StringBuilder();
-            StringBuilder currentHeader = headerMap.get(targetFile.getAbsolutePath());
+            // Rule内容
+            StringBuilder ruleContent = new StringBuilder();
+            // URLRewrite内容
             StringBuilder urlRewriteContent = new StringBuilder();
+            // HeaderRewrite内容
             StringBuilder headerRewriteContent = new StringBuilder();
+            // BodyRewrite内容
             StringBuilder bodyRewriteContent = new StringBuilder();
+            // MapLocal内容
             StringBuilder mapLocalContent = new StringBuilder();
+            // Script内容
             StringBuilder scriptContent = new StringBuilder();
-
+            // hostname
+            StringBuilder hostnameContent = new StringBuilder();
+            // 处理filter文件
+            if(filterFile.exists()){
+                processFilterContent(filterFile, true);
+                commentContent = headerMap.get(targetFile.getAbsolutePath());
+                ruleContent = contentMap.get(targetFile.getAbsolutePath());
+                flag = true;
+            }
+            // 读取源文件内容
             try (BufferedReader reader = new BufferedReader(new FileReader(subFile, StandardCharsets.UTF_8))) {
                 String line;
+                String lastLine = null;
                 while ((line = reader.readLine()) != null) {
-                    if (line.trim().startsWith("#")) {
-                        if(null != currentHeader && !currentHeader.toString().trim().contains(line.trim())) {
+                    // 处理注释内容
+                    if (line.startsWith("# >") || line.startsWith("#!")) {
+                        if (null != commentContent && !commentContent.toString().trim().contains(line.trim())) {
+                            line = processCommentContent(line);
                             commentContent.append(line).append(System.lineSeparator());
                         }
+                    // 处理hostname
+                    }else if(line.trim().startsWith("hostname")){
+                        hostnameContent.append(ConfigGeneratorUtils.scriptRegexReplace(ConfigGeneratorConstants.QUANX_HOSTNAME_REGEX,ConfigGeneratorConstants.SURGE_HOSTNAME_REGEX,line));
+                    // 处理重写内容
                     } else {
-                        fileContent.append(line).append(System.lineSeparator());
+                        String type = ConfigGeneratorUtils.getQuanXRewriteKeywordForLine(line);
+                        String convertedLine = convertLineContent(line, type);
+                        if(null != lastLine && lastLine.contains("#") && !lastLine.contains("# >") && !lastLine.contains("#!")){
+                            convertedLine = lastLine + "\n" + convertedLine;
+                        }
+                        if(null != convertedLine && !convertedLine.isEmpty()) {
+                            if(ArrayUtils.contains(ConfigGeneratorConstants.URL_REWRITE_KEYWORDS,type)){
+                                urlRewriteContent.append(convertedLine).append(System.lineSeparator());
+                            }else if(ArrayUtils.contains(ConfigGeneratorConstants.HEADER_REWRITE_KEYWORDS,type)){
+                                headerRewriteContent.append(convertedLine).append(System.lineSeparator());
+                            }else if(ArrayUtils.contains(ConfigGeneratorConstants.BODY_REWRITE_KEYWORDS,type)){
+                                bodyRewriteContent.append(convertedLine).append(System.lineSeparator());
+                            }else if(ArrayUtils.contains(ConfigGeneratorConstants.MAP_LOCAL_KEYWORDS,type)){
+                                mapLocalContent.append(convertedLine).append(System.lineSeparator());
+                            }else if(ArrayUtils.contains(ConfigGeneratorConstants.SCRIPT_KEYWORDS,type)){
+                                scriptContent.append(convertedLine).append(System.lineSeparator());
+                            }
+                        }
+                        lastLine = line;
                     }
+
                 }
-                fileContent.insert(0, ("[Rule]\n"));
-                saveToMap(headerMap, targetFile.getAbsolutePath(), commentContent.toString());
+                if(null != ruleContent && !ruleContent.toString().isEmpty()){
+                    fileContent.append(ConfigGeneratorConstants.SURGE_RULE_AREA).append(ruleContent).append("\n");
+                }
+                if(!urlRewriteContent.toString().isEmpty()){
+                    fileContent.append(ConfigGeneratorConstants.SURGE_URL_REWRITE_AREA).append(urlRewriteContent).append("\n");
+                }
+                if(!headerRewriteContent.toString().isEmpty()){
+                    fileContent.append(ConfigGeneratorConstants.SURGE_HEADER_REWRITE_AREA).append(headerRewriteContent).append("\n");
+                }
+                if(!bodyRewriteContent.toString().isEmpty()){
+                    fileContent.append(ConfigGeneratorConstants.SURGE_BODY_REWRITE_AREA).append(bodyRewriteContent).append("\n");
+                }
+                if(!mapLocalContent.toString().isEmpty()){
+                    fileContent.append(ConfigGeneratorConstants.SURGE_MAP_LOCAL_AREA).append(mapLocalContent).append("\n");
+                }
+                if(!scriptContent.toString().isEmpty()){
+                    fileContent.append(ConfigGeneratorConstants.SURGE_SCRIPT_AREA).append(scriptContent).append("\n");
+                }
+                if(!hostnameContent.toString().isEmpty()){
+                    fileContent.append(ConfigGeneratorConstants.SURGE_HOSTNAME_AREA).append(hostnameContent).append("\n");
+                }
+
             }
 
-
-
-
-
+        headerMap.put(targetFile.getAbsolutePath(), commentContent);
+        contentMap.put(targetFile.getAbsolutePath(), fileContent);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
+        return flag;
     }
 
+    /**
+     * 处理文件头部注释内容
+     *
+     * @param line 行内容
+     * @return 修改后的行内容
+     */
+    private static String processCommentContent(String line) {
+        line = line.replace(ConfigGeneratorConstants.CONF_SIGN, ConfigGeneratorConstants.SURGE_MODULE_SIGN);
+        line = line.replace(ConfigGeneratorConstants.LIST_SIGN, ConfigGeneratorConstants.SURGE_MODULE_SIGN);
+        line = line.replace(ConfigGeneratorConstants.QUANX_SIGN, ConfigGeneratorConstants.SURGE_SIGN);
+        return line;
+    }
+
+    /**
+     * 根据关键字类型转换重写文件行内容
+     * @param line 行内容
+     * @param type 类型
+     * @return String
+     */
+    private static String convertLineContent(String line, String type) {
+        if(null == line || null == type){
+            return null;
+        }
+        String prefix = "url ";
+        switch (type) {
+            case "request-body":
+            case "response-body":
+                line = ConfigGeneratorUtils.scriptRegexReplace(ConfigGeneratorConstants.QUANX_BODY_REWRITE_REGEX,ConfigGeneratorConstants.SURGE_BODY_REWRITE_REGEX, line);
+                assert line != null;
+                line = line
+                        .replace("http-response-body","http-response")
+                        .replace("http-request-body","http-request");
+                break;
+            case "reject-dict":
+                line = line.replace(prefix + type, ConfigGeneratorConstants.SURGE_REJECT_DICT_STR);
+                break;
+            case "reject-200":
+                line = line.replace(prefix + type, ConfigGeneratorConstants.SURGE_REJECT_200_STR);
+                break;
+            case "echo-response":
+                line = ConfigGeneratorUtils.scriptRegexReplace(ConfigGeneratorConstants.QUANX_ECHO_RESPONSE_REGEX,ConfigGeneratorConstants.SURGE_ECHO_RESPONSE_REGEX,line);
+                break;
+            case "script-request-body":
+            case "script-response-body":
+                line = ConfigGeneratorUtils.scriptRegexReplace(ConfigGeneratorConstants.QUANX_JS_BODY_REGEX, ConfigGeneratorConstants.SURGE_JS_BODY_REGEX, line);
+                assert line != null;
+                line = line
+                        .replace("type=http-script-response-body", "type=http-response")
+                        .replace("type=http-script-request-body", "type=http-request");
+                break;
+            case "302":
+                line = ConfigGeneratorUtils.scriptRegexReplace(ConfigGeneratorConstants.QUANX_302_REGEX,ConfigGeneratorConstants.SURGE_302_REGEX,line);
+                break;
+            case "reject":
+                line = line.replace(prefix + type,ConfigGeneratorConstants.SURGE_REJECT_STR);
+                break;
+            case "script-response-header":
+            case "script-request-header":
+                line = ConfigGeneratorUtils.scriptRegexReplace(ConfigGeneratorConstants.QUANX_JS_HEADER_REGEX, ConfigGeneratorConstants.SURGE_JS_HEADER_REGEX, line);
+                assert line != null;
+                line = line
+                        .replace("type=http-script-response-header", "type=http-response")
+                        .replace("type=http-script-request-header", "type=http-request");
+                break;
+            case "url-and-header":
+                line = ConfigGeneratorUtils.scriptRegexReplace(ConfigGeneratorConstants.QUANX_URL_AND_HEADER_REGEX, ConfigGeneratorConstants.SURGE_URL_AND_HEADER_REGEX, line);
+                break;
+            case "reject-img":
+                line = line.replace(prefix + type, ConfigGeneratorConstants.SURGE_REJECT_IMG_STR);
+                break;
+            default:
+                break;
+        }
+        return line;
+    }
+
+    /**
+     * 保存内容到Map
+     *
+     * @param map     Map
+     * @param key     key
+     * @param content 内容
+     */
     private static void saveToMap(HashMap<String, StringBuilder> map, String key, String content) {
         if(null != map) {
             if (null != map.get(key)) {
@@ -296,58 +479,67 @@ public class SurgeConfigGenerator {
         }
     }
 
-    /**
-     * 处理过滤器文件
-     *
-     * @param subFile 原始过滤器文件
-     */
-    private static void processFilterFile(File subFile) {
-        if (subFile.getAbsolutePath().endsWith(ConfigGeneratorConstants.LIST_SIGN)) {
-            processFilterContent(subFile);
-        } else {
-            if (null != subFile.listFiles() && Objects.requireNonNull(subFile.listFiles()).length != 0) {
-                processFilterFile(Objects.requireNonNull(subFile.listFiles())[0]);
-            }
-        }
-    }
+
 
     /**
      * 处理过滤器内容
      *
      * @param subFile 原始过滤器文件
      */
-    private static void processFilterContent(File subFile) {
+    private static void processFilterContent(File subFile, boolean stopFlag) {
         // 目标文件路径
         File targetFile = getSurgeModuleFile(subFile.getAbsolutePath());
-        // 需要替换的内容
-        String oldContent = "host";
-        // 替换成的内容
-        String newContent = "domain";
+        // 前缀集合
+        HashSet<String> keySet = new HashSet<>();
         try {
             // 1. 读取源文件内容
             StringBuilder fileContent = new StringBuilder();
             StringBuilder commentContent = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(new FileReader(subFile, StandardCharsets.UTF_8))) {
                 String line;
-
                 while ((line = reader.readLine()) != null) {
-                    if (line.trim().startsWith("#")) {
+                    if (line.startsWith("# >") || line.startsWith("#!")) {
+                        line = processCommentContent(line);
                         commentContent.append(line).append(System.lineSeparator());
                     } else {
+                        String key = line.trim().toLowerCase().split(",")[0];
+                        keySet.add(key + ",");
+                        if (key.contains("host")) {
+                            line = line.toLowerCase().replace(", reject", ", REJECT, extended-matching, pre-matching");
+                        } else {
+                            line = line.replace(", reject", ", REJECT, pre-matching");
+                        }
+
+                        if (line.contains(",")){
+                            line = line.replace(line.split(",")[2],line.split(",")[2].toUpperCase());
+                        }
+                        line = line.replaceAll(" ","").replaceAll(",",", ");
                         fileContent.append(line).append(System.lineSeparator());
                     }
                 }
-                fileContent.insert(0, ("[Rule]\n"));
+                if(!stopFlag) fileContent.insert(0, ("[Rule]\n"));
                 saveToMap(headerMap, targetFile.getAbsolutePath(), commentContent.toString());
             }
             // 2. 替换指定内容
-            String modifiedContent = fileContent.toString().replace(oldContent, newContent);
+            String modifiedContent = fileContent.toString();
+            for (String key : keySet) {
+                modifiedContent = modifiedContent.replace(key, key.toUpperCase());
+            }
+            modifiedContent = modifiedContent.replace("HOST", "DOMAIN")
+                                             .replace("IP6-CIDR", "IP-CIDR6");
             saveToMap(contentMap, targetFile.getAbsolutePath(), modifiedContent);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
     }
 
+    /**
+     * 替换文件
+     *
+     * @param targetFile 目标文件
+     * @return 是否替换成功
+     * @throws IOException IO异常
+     */
     private static boolean replaceFile(File targetFile) throws IOException {
         if(getSpecialFlag(targetFile.getAbsolutePath())){
             return false;
@@ -356,22 +548,41 @@ public class SurgeConfigGenerator {
     }
 
 
-    /**
-     * 打印路径集合元素及数量
-     *
-     * @param paths 路径集合
-     * @param tips  打印提示
-     */
-    private static void printPathCount(HashSet<String> paths, String tips) {
-        for (String path : paths) {
-            System.out.println(path);
-        }
-        System.out.println(tips + ":" + paths.size());
-    }
-
-
     public static void main(String[] args) throws IOException {
         getOriginalFilePaths(quanXRuleDir);
-        generateConfigDirectory(appPaths, wechatAppletPaths, alipayAppletPaths, webPaths);
+        generateConfigDirectory(appPaths);
+        generateConfigDirectory(wechatAppletPaths);
+        generateConfigDirectory(alipayAppletPaths);
+        generateConfigDirectory(webPaths);
+
+        generateOthers();
+        for(String path : appPaths){
+            String appName = path.substring(path.lastIndexOf("/")+1);
+            System.out.println(path + "," + "app," + appName);
+        }
+        for(String path : wechatAppletPaths){
+            String wechatAppletName = path.substring(path.lastIndexOf("/")+1);
+            System.out.println(path + "," + "wechatApplet," + wechatAppletName);
+        }
+        for(String path : alipayAppletPaths){
+            String alipayAppletName = path.substring(path.lastIndexOf("/")+1);
+            System.out.println(path + "," + "alipayApplet," + alipayAppletName);
+        }
+        for(String path : webPaths){
+            String webName = path.substring(path.lastIndexOf("/")+1);
+            System.out.println(path + "," + "web," + webName);
+        }
+
+
+    }
+
+    /**
+     * 其他杂项生成
+     */
+    private static void generateOthers() throws IOException {
+        HashSet<String> others = new HashSet<>();
+        others.add("/Users/zirawell/Git/R-Store/Rule/QuanX/Revision");
+        others.add("/Users/zirawell/Git/R-Store/Rule/QuanX/Plugin");
+        generateConfigDirectory(others);
     }
 }

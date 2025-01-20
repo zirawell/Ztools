@@ -5,8 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,16 +28,24 @@ import java.util.stream.Collectors;
 public class QuanXConfigGenerator {
     private static final Logger logger = LoggerFactory.getLogger("QuanXConfigGenerator.class");
     // ---------------------各类文件路径------------------------
-    // Home路径
-    public static final String HOME_DIRECTORY = ConfigGeneratorUtils.getHomeDirectory();
     // 项目根目录
-    public static final String PROJECT_BASE_DIRECTORY = HOME_DIRECTORY + "/Git/R-Store/Rule/QuanX";
+    public static final String ROOT_BASE_DIRECTORY = ConfigGeneratorConstants.PROJECT_BASE_DIRECTORY;
+    // QuanX规则路径
+    public static final String PROJECT_BASE_DIRECTORY = ConfigGeneratorConstants.QUANX_RULE_DIRECTORY;
     // Git仓库根目录
-    public static final String GITHUB_BASE_URL = "https://github.com/zirawell/R-Store";
+    public static final String GITHUB_BASE_URL = ConfigGeneratorConstants.GITHUB_BASE_URL_PREFIX
+                                                + ConfigGeneratorConstants.FILE_SEPARATOR
+                                                + ConfigGeneratorConstants.PROJECT_NAME_SIGN;
+
+    // 项目根目录README
+    public static final String ROOT_BASE_README = ROOT_BASE_DIRECTORY
+                                                + ConfigGeneratorConstants.FILE_SEPARATOR
+                                                + ConfigGeneratorConstants.README_SIGN;
+
     // Git仓库相对路径
     public static String GITHUB_RELATIVE_URL;
     // 脚本文件相对路径
-    public static final String SCRIPT_DIRECTORY = HOME_DIRECTORY + "/Git/R-Store/Res/Scripts";
+    public static final String SCRIPT_DIRECTORY = ConfigGeneratorConstants.SCRIPTS_DIRECTORY;
     // App配置相对路径
     public static final String APP_RELATIVE_DIRECTORY = "/Adblock/App";
     // 微信小程序相对路径
@@ -103,7 +109,7 @@ public class QuanXConfigGenerator {
 
 
     // Git分支
-    public static String GIT_BRANCH = getBranchName();
+    public static String GIT_BRANCH = ConfigGeneratorConstants.GIT_BRANCH;
 
     /**
      * 生成文件名
@@ -135,11 +141,17 @@ public class QuanXConfigGenerator {
             // init variables
             // default main branch
             GIT_BRANCH = "main";
-            GITHUB_RELATIVE_URL = "/tree/" + GIT_BRANCH + "/Rule/QuanX";
+            GITHUB_RELATIVE_URL = "/tree/" + GIT_BRANCH
+                    + ConfigGeneratorConstants.FILE_SEPARATOR
+                    + ConfigGeneratorConstants.RULE_SIGN
+                    + ConfigGeneratorConstants.FILE_SEPARATOR
+                    + ConfigGeneratorConstants.QUANX_SIGN;
             //generate Overall rewrite and filter files
             generateOverallConfigs();
             //generate README for project
             generateProjectReadMe();
+            //generate README for root
+            generateRootReadMe();
             //generate Script Comment
             generateScriptComment();
             //output the project url
@@ -353,7 +365,11 @@ public class QuanXConfigGenerator {
      * @param scriptsFileSet 脚本文件集合
      */
     private static void getScriptsRewriteFiles(Map<String, List<String>> rewriteFileMap, HashSet<String> scriptsFileSet) {
-        File scanDirectory = new File(PROJECT_BASE_DIRECTORY + ConfigGeneratorConstants.FILE_SEPARATOR + ConfigGeneratorConstants.ADBLOCK_SIGN);
+        File scanDirectory = new File(
+                PROJECT_BASE_DIRECTORY
+                + ConfigGeneratorConstants.FILE_SEPARATOR
+                + ConfigGeneratorConstants.ADBLOCK_SIGN
+        );
         for (String searchString : scriptsFileSet) {
             scanFiles(scanDirectory, rewriteFileMap, searchString);
         }
@@ -380,7 +396,12 @@ public class QuanXConfigGenerator {
                 } else {
                     // 如果是文件，检查文件内容
                     if (scanContents(file, searchString)) {
-                        String githubUrl = file.getAbsolutePath().replace(HOME_DIRECTORY + "/Git", "https://raw.githubusercontent.com/zirawell").replace("/R-Store", "/R-Store/" + GIT_BRANCH);
+                        String githubUrl = file.getAbsolutePath()
+                                .replace(ConfigGeneratorConstants.HOME_DIRECTORY
+                                        + ConfigGeneratorConstants.FILE_SEPARATOR
+                                        + ConfigGeneratorConstants.GIT_SIGN
+                                        , ConfigGeneratorConstants.GITHUB_RAW_URL_PREFIX)
+                                .replace("/R-Store", "/R-Store/" + GIT_BRANCH);
                         if (rewriteFileMap.get(searchString) != null) {
                             rewriteFileMap.get(searchString).add(githubUrl);
                         } else {
@@ -439,7 +460,7 @@ public class QuanXConfigGenerator {
     private static void generateBottomInfo(StringBuffer sb) {
         sb.append("## Thanks To\n");
         for (String s : ConfigGeneratorConstants.THANKS_TO_ARRAY) {
-            sb.append("- ").append(s).append(System.lineSeparator());
+            sb.append(s).append(System.lineSeparator());
         }
     }
 
@@ -496,9 +517,43 @@ public class QuanXConfigGenerator {
         generateIndexTableByType(sb, ConfigGeneratorConstants.WEB_SIGN);
     }
 
+    /**
+     * 为根目录生成README
+     */
+    private static void generateRootReadMe() {
+        generateCountTableForRoot();
+        generateThanksToForRoot();
+
+    }
 
     /**
-     * 生成索引表
+     * 为根项目目录生成感谢表
+     */
+    private static void generateThanksToForRoot() {
+        List<String> thanksToList = new ArrayList<>(Arrays.asList(ConfigGeneratorConstants.THANKS_TO_ARRAY));
+        thanksToList.add(0,"## 特别鸣谢");
+        ConfigGeneratorUtils.replaceLines(ROOT_BASE_README,"## 特别鸣谢",thanksToList.size(), thanksToList);
+    }
+
+    /**
+     * 为项目根目录生成统计表
+     */
+    private static void generateCountTableForRoot() {
+        StringBuffer sb = new StringBuffer();
+        generateCountTable(sb);
+        String outputContent = sb.toString()
+                .replace("## Count Table", "## 收录统计")
+                .replace("本项目收录统计情况如下:\n", "")
+                .replace("All", "全部")
+                .replace("Wechat Applet", "微信小程序")
+                .replace("Alipay Applet", "支付宝小程序")
+                .replace("Web", "网站");
+        List<String> outputContentList = Arrays.asList(outputContent.split("\n"));
+        ConfigGeneratorUtils.replaceLines(ROOT_BASE_README, ConfigGeneratorConstants.ROOT_README_COUNT_TABLE_START_LINE, outputContentList.size(), outputContentList);
+    }
+
+    /**
+     * 根据类型生成索引表
      *
      * @param sb       信息内容
      * @param typeSign 类型标识(all/app/wechat/alipay)
@@ -590,10 +645,11 @@ public class QuanXConfigGenerator {
      * @param sb 外部输出内容
      */
     private static void generateTreePath(StringBuffer sb) {
+        String urlPrefix = GITHUB_BASE_URL + GITHUB_RELATIVE_URL;
+        String info = "";
         StringBuilder sbTmp = new StringBuilder();
         String output = "";
         // 定义要执行的命令
-
         String command = "/opt/homebrew/bin/tree -I 'Utils' -dL 2 " + PROJECT_BASE_DIRECTORY;
 
         try {
@@ -607,26 +663,29 @@ public class QuanXConfigGenerator {
             sb.append("```\n");
             sb.append(output);
             sb.append("```\n");
+
             for (String s : ConfigGeneratorConstants.DIR_ARRAY) {
+                sb.append("- [").append(s).append("](").append(urlPrefix).append("/").append(s).append(") : ");
                 switch (s) {
                     case "Adblock":
-                        sb.append("- [Adblock](https://github.com/zirawell/R-Store/tree/main/Rule/QuanX/Adblock) : ").append("收录各类 App/小程序/Web 的**广告拦截**规则\n");
+                        info = "收录各类 App/小程序/Web 的**广告拦截**规则\n";
                         break;
                     case "Filter":
-                        sb.append("- [Filter](https://github.com/zirawell/R-Store/tree/main/Rule/QuanX/Filter) : ").append("收录常用的**分流**规则\n");
+                        info = "收录常用的**分流**规则\n";
                         break;
                     case "Plugin":
-                        sb.append("- [Plugin](https://github.com/zirawell/R-Store/tree/main/Rule/QuanX/Plugin) : ").append("收录各类脚本插件的**配置**规则\n");
+                        info = "收录各类脚本插件的**配置**规则\n";
                         break;
                     case "Redirect":
-                        sb.append("- [Redirect](https://github.com/zirawell/R-Store/tree/main/Rule/QuanX/Redirect) : ").append("收录各类**重定向**规则\n");
+                        info = "收录各类**重定向**规则\n";
                         break;
                     case "Revision":
-                        sb.append("- [Revision](https://github.com/zirawell/R-Store/tree/main/Rule/QuanX/Revision) : ").append("收录分流**修正**规则\n");
+                        info = "收录分流**修正**规则\n";
                         break;
                     default:
                         break;
                 }
+                sb.append(info);
 
             }
 
@@ -634,30 +693,6 @@ public class QuanXConfigGenerator {
         } catch (IOException | InterruptedException e) {
             logger.error(e.getMessage(), e);
         }
-    }
-
-    /**
-     * 获取Git分支
-     *
-     * @return Git分支
-     */
-    private static String getBranchName() {
-        StringBuilder sbTmp = new StringBuilder();
-        String output;
-        // 定义要执行的命令
-        String command = "cd " + PROJECT_BASE_DIRECTORY + "&& git branch --show-current";
-
-        try {
-            int exitCode = ConfigGeneratorUtils.executeShellCommand(sbTmp, command);
-            if (exitCode != 0) {
-                System.out.println("getBranchName: Command failed with exit code: " + exitCode);
-            }
-            System.out.println("Git分支：" + sbTmp);
-        } catch (IOException | InterruptedException e) {
-            logger.error(e.getMessage(), e);
-        }
-        output = sbTmp.toString();
-        return output;
     }
 
 
@@ -792,17 +827,22 @@ public class QuanXConfigGenerator {
         titleBuffer.append("#!count=支持约").append(count).append("个").append(countName).append(System.lineSeparator());
         titleBuffer.append("#!author=zirawell").append(System.lineSeparator());
         titleBuffer.append("#!homepage=" + GITHUB_BASE_URL).append(System.lineSeparator());
-        titleBuffer.append("#!raw-url=https://raw.githubusercontent.com/zirawell/")
-                .append(ConfigGeneratorConstants.PROJECT_NAME_SIGN)
-                .append(ConfigGeneratorConstants.FILE_SEPARATOR)
-                .append(GIT_BRANCH).append("/Rule/QuanX")
-                .append(ConfigGeneratorConstants.FILE_SEPARATOR)
-                .append(ConfigGeneratorConstants.ADBLOCK_SIGN)
-                .append(COLLECTION_RELATIVE_DIRECTORY)
-                .append(ConfigGeneratorConstants.FILE_SEPARATOR)
-                .append(fileSign).append(ConfigGeneratorConstants.FILE_SEPARATOR)
-                .append(rawFileName).append(System.lineSeparator());
-        titleBuffer.append("#!tg-group=https://t.me/lanjieguanggao").append(System.lineSeparator());
+        titleBuffer.append("#!raw-url=").append(ConfigGeneratorConstants.GITHUB_RAW_URL_PREFIX)
+                   .append(ConfigGeneratorConstants.FILE_SEPARATOR)
+                   .append(ConfigGeneratorConstants.PROJECT_NAME_SIGN)
+                   .append(ConfigGeneratorConstants.FILE_SEPARATOR)
+                   .append(GIT_BRANCH)
+                   .append(ConfigGeneratorConstants.FILE_SEPARATOR)
+                   .append(ConfigGeneratorConstants.RULE_SIGN)
+                   .append(ConfigGeneratorConstants.FILE_SEPARATOR)
+                   .append(ConfigGeneratorConstants.QUANX_SIGN)
+                   .append(ConfigGeneratorConstants.FILE_SEPARATOR)
+                   .append(ConfigGeneratorConstants.ADBLOCK_SIGN)
+                   .append(COLLECTION_RELATIVE_DIRECTORY)
+                   .append(ConfigGeneratorConstants.FILE_SEPARATOR)
+                   .append(fileSign).append(ConfigGeneratorConstants.FILE_SEPARATOR)
+                   .append(rawFileName).append(System.lineSeparator());
+        titleBuffer.append("#!tg-group=").append(ConfigGeneratorConstants.TELEGRAM_GROUP).append(System.lineSeparator());
         titleBuffer.append("#!date=").append(simpleDateFormat.format(new Date())).append(System.lineSeparator());
         if (ConfigGeneratorConstants.FILTER_SIGN.equals(fileSign)) {
             titleBuffer.append("#!proxy-select=reject").append(System.lineSeparator());
@@ -937,7 +977,7 @@ public class QuanXConfigGenerator {
                         }
                     } else if (!line.isEmpty()) {
                         // 跳过注释行
-                        if (line.startsWith("#") && !line.contains(">") && !line.contains("⚠️")) {
+                        if ((line.startsWith("#") || line.startsWith(";")) && !line.contains(">") && !line.contains("⚠️")) {
                             continue;
                         }
                         // 格式校验
@@ -951,7 +991,9 @@ public class QuanXConfigGenerator {
                 }
                 // 过滤器规则处理
             } else if (fileName.endsWith(ConfigGeneratorConstants.LIST_SIGN)
-                    && filePath.contains(ConfigGeneratorConstants.FILE_SEPARATOR + ConfigGeneratorConstants.FILTER_SIGN + ConfigGeneratorConstants.FILE_SEPARATOR)) {
+                    && filePath.contains(ConfigGeneratorConstants.FILE_SEPARATOR
+                    + ConfigGeneratorConstants.FILTER_SIGN
+                    + ConfigGeneratorConstants.FILE_SEPARATOR)) {
                 List<String> lines = Files.readAllLines(path);
                 for (String line : lines) {
                     filterSb.append(line).append(System.lineSeparator());
@@ -994,9 +1036,8 @@ public class QuanXConfigGenerator {
      * @param f 生成文件目录
      */
     private static void generateReadme(File f) {
-        String prefixUrl = f.getAbsolutePath().replace(PROJECT_BASE_DIRECTORY, GITHUB_BASE_URL + GITHUB_RELATIVE_URL);
-        String suffixUrl;
-        String completeUrl;
+        String dirPath;
+        String resourceParseUrl;
         File readme = new File(f.getAbsolutePath() + ConfigGeneratorConstants.FILE_SEPARATOR + ConfigGeneratorConstants.README_SIGN);
         File[] subFiles = f.listFiles();
         StringBuffer sb = new StringBuffer();
@@ -1021,15 +1062,20 @@ public class QuanXConfigGenerator {
             type = "App";
         }
         List<String> collect = subFileNameSet.stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
-        String summary = "本目录共收录" + count + "个" + type + "，详情见如下：";
+        String summary = "本目录共收录" + count + "个" + type + "，详情见如下，单击导入对应配置：";
         sb.append("# ").append(f.getName()).append(System.lineSeparator());
         sb.append("<details>").append(System.lineSeparator());
-        sb.append("<summary>").append(System.lineSeparator()).append(summary).append(System.lineSeparator()).append("</summary>").append(System.lineSeparator());
+        sb.append("<summary>").append(System.lineSeparator());
+        sb.append(summary).append(System.lineSeparator());
+        sb.append("</summary>").append(System.lineSeparator());
         sb.append(System.lineSeparator());
+        // 单个App清单列表
         for (String fileName : collect) {
-            suffixUrl = encodeToURL(fileName);
-            completeUrl = prefixUrl + ConfigGeneratorConstants.FILE_SEPARATOR + suffixUrl;
-            sb.append("- [").append(fileName).append("]").append("(").append(completeUrl).append(")").append(System.lineSeparator());
+            dirPath = f.getAbsolutePath() + ConfigGeneratorConstants.FILE_SEPARATOR + fileName;
+            resourceParseUrl = QuanXResourceParser.getResourceUrlFromDirectory(dirPath, fileName);
+            sb.append("- [").append(fileName).append("]");
+            sb.append("(").append(resourceParseUrl).append(")");
+            sb.append(System.lineSeparator());
         }
         sb.append(System.lineSeparator());
         sb.append("</details>");
@@ -1045,30 +1091,17 @@ public class QuanXConfigGenerator {
     private static void processFileName(File f) {
         String fileAbsolutePath = f.getAbsolutePath();
         allFileNameSet.add(fileAbsolutePath);
-        if (f.getAbsolutePath().contains("Applet")) {
+        if (f.getAbsolutePath().contains(ConfigGeneratorUtils.capitalizeFirstLetter(ConfigGeneratorConstants.APPLET_SIGN))) {
             if (f.getAbsolutePath().contains(WECHAT_RELATIVE_DIRECTORY)) {
                 wechatFileNameSet.add(fileAbsolutePath);
             } else if (f.getAbsolutePath().contains(ALIPAY_RELATIVE_DIRECTORY)) {
                 alipayFileNameSet.add(fileAbsolutePath);
             }
-        } else if (f.getAbsolutePath().contains("Web")) {
+        } else if (f.getAbsolutePath().contains(ConfigGeneratorUtils.capitalizeFirstLetter(ConfigGeneratorConstants.WEB_SIGN))) {
             webFileNameSet.add(fileAbsolutePath);
         } else {
             appFileNameSet.add(fileAbsolutePath);
         }
-    }
-
-    /**
-     * URL编码
-     *
-     * @param input 输入文本
-     * @return URL编码后的文本
-     */
-    public static String encodeToURL(String input) {
-        String encoded;
-        // 将字符串转换为 URL 编码格式，使用 UTF-8 编码
-        encoded = URLEncoder.encode(input, StandardCharsets.UTF_8);
-        return encoded;
     }
 
 

@@ -8,7 +8,11 @@ package com.zlog.config.generator;
 public class AllConfigGenerator {
 
     public static void main(String[] args) {
+        // QuanX配置生成
         QuanXConfigGenerator.generateConfigs();
+        // QuanX图标库生成
+        IconGalleryGenerator.generateJsonFile();
+        // Surge配置生成
         SurgeConfigGenerator.generateConfigs();
 
     }
