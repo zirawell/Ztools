@@ -197,7 +197,8 @@ public class ConfigGeneratorConstants {
             "response-body"
     };
     public static final String[] HEADER_REWRITE_KEYWORDS = new String[]{
-            "url-and-header"
+            "url-and-header",
+            "request-header"
     };
     public static final String[] SCRIPT_KEYWORDS = new String[]{
             "script-response-body",
