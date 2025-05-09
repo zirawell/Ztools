@@ -107,44 +107,38 @@ public class AppStoreUtil {
 
     /**
      * 图片压缩
+     *
      * @param filePath 需要压缩的图片路径
-     * @return boolean 成功标识
      */
-    public static boolean compressImage(String filePath) {
-        boolean resultFlag = false;
+    public static void compressImage(String filePath) {
         StringBuilder sbTmp = new StringBuilder();
-        String output;
         String dirPath = filePath.substring(0, filePath.lastIndexOf("/"));
         String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
         // 定义要执行的命令
-        String command = "cd " + filePath.substring(0, filePath.lastIndexOf("/")) + "&& ffmpeg -y -i "+fileName+" -vf \"scale=108:108\" -q:v 2 -map_metadata -1 " + fileName;
+        String command = "cd " + dirPath + "&& ffmpeg -y -i "+fileName+" -vf \"scale=108:108\" -q:v 2 -map_metadata -1 " + fileName;
         try {
             int exitCode = ConfigGeneratorUtils.executeShellCommand(sbTmp, command);
             if (exitCode != 0) {
                 System.out.println("compressImage: Command failed with exit code: " + exitCode);
             }
-            resultFlag = true;
         } catch (IOException | InterruptedException e) {
             System.out.println(e.getMessage());
         }
-        return resultFlag;
     }
 
-    public static void main(String[] args) {
-        try {
-            AppInfo appInfo = getAppInfo("哔哩哔哩", "CN");
-            if (appInfo != null) {
-                System.out.println("App 名称: " + appInfo.getName());
-                System.out.println("商店链接: " + simplifyUrl(appInfo.getStoreUrl()));
-                System.out.println("图标链接: " + appInfo.getIconUrl());
-                System.out.println("Bundle ID: " + appInfo.getBundleId());
-            } else {
-                System.out.println("未找到相关 App");
-            }
-            downloadIcon("/Users/zirawell/Downloads/icon.png", appInfo.getIconUrl());
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
+    public static String getAppIconAndUrl(String appName, String downloadPath, String countryCode) throws IOException {
+        AppInfo appInfo = getAppInfo(appName, countryCode);
+        if (appInfo == null || appInfo.getIconUrl() == null) {
+            return null;
+        }else{
+            downloadIcon(downloadPath, appInfo.getIconUrl());
+            compressImage(downloadPath);
+            return simplifyUrl(appInfo.getStoreUrl());
         }
-         compressImage("/Users/zirawell/Downloads/icon.png");
+
+    }
+
+    public static void main(String[] args) throws IOException {
+         getAppIconAndUrl("微信","/Users/zirawell/Downloads/icon.png","CN");
     }
 }
