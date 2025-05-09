@@ -22,10 +22,10 @@ import java.nio.file.Paths;
 public class AppStoreLookup {
 
     public static class AppInfo {
-        private String name;
-        private String storeUrl;
-        private String iconUrl;
-        private String bundleId;
+        private final String name;
+        private final String storeUrl;
+        private final String iconUrl;
+        private final String bundleId;
 
         public AppInfo(String name, String storeUrl, String iconUrl, String bundleId) {
             this.name = name;
@@ -61,7 +61,7 @@ public class AppStoreLookup {
         JsonObject root = gson.fromJson(json, JsonObject.class);
         JsonArray results = root.getAsJsonArray("results");
 
-        if (results.size() == 0) return null;
+        if (results.isEmpty()) return null;
 
         JsonObject appData = results.get(0).getAsJsonObject();
         String name = appData.get("trackName").getAsString();
@@ -85,7 +85,7 @@ public class AppStoreLookup {
 
     public static void main(String[] args) {
         try {
-            AppInfo appInfo = getAppInfo("微信", "CN");
+            AppInfo appInfo = getAppInfo("哔哩哔哩", "CN");
             if (appInfo != null) {
                 System.out.println("App 名称: " + appInfo.getName());
                 System.out.println("商店链接: " + appInfo.getStoreUrl());
@@ -95,7 +95,7 @@ public class AppStoreLookup {
                 System.out.println("未找到相关 App");
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
     }
 }
