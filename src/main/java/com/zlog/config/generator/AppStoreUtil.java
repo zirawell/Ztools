@@ -19,7 +19,7 @@ import java.nio.file.Paths;
  * @Author: Dark Wang
  * @Create: 2025/5/8 18:20
  **/
-public class AppStoreLookup {
+public class AppStoreUtil {
 
     public static class AppInfo {
         private final String name;
@@ -73,22 +73,39 @@ public class AppStoreLookup {
         return new AppInfo(name, storeUrl, iconUrl, bundleId);
     }
 
-    public void downloadIcon(String savePath,String iconUrl) throws IOException {
-    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-        HttpGet request = new HttpGet(iconUrl);
-        try (CloseableHttpResponse response = httpClient.execute(request)) {
-            byte[] iconData = EntityUtils.toByteArray(response.getEntity());
-            Files.write(Paths.get(savePath), iconData);
+    public void downloadIcon(String savePath, String iconUrl) throws IOException {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpGet request = new HttpGet(iconUrl);
+            try (CloseableHttpResponse response = httpClient.execute(request)) {
+                byte[] iconData = EntityUtils.toByteArray(response.getEntity());
+                Files.write(Paths.get(savePath), iconData);
+            }
         }
+
+
     }
-}
+
+    /**
+     * 简化App下载链接
+     * @param url 原始链接
+     * @return String 简化后的链接
+     */
+    public static String simplifyUrl(String url){
+        String resultUrl;
+        int index1 = url.indexOf("/app/") + 4;
+        int index2 = url.indexOf("/id");
+        resultUrl = url.replace(url.substring(index1, index2),"");
+        int index3 = resultUrl.indexOf("?uo=");
+        resultUrl = resultUrl.substring(0,index3);
+        return resultUrl;
+    }
 
     public static void main(String[] args) {
         try {
             AppInfo appInfo = getAppInfo("哔哩哔哩", "CN");
             if (appInfo != null) {
                 System.out.println("App 名称: " + appInfo.getName());
-                System.out.println("商店链接: " + appInfo.getStoreUrl());
+                System.out.println("商店链接: " + simplifyUrl(appInfo.getStoreUrl()));
                 System.out.println("图标链接: " + appInfo.getIconUrl());
                 System.out.println("Bundle ID: " + appInfo.getBundleId());
             } else {
