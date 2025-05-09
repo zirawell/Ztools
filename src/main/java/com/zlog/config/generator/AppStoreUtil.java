@@ -100,6 +100,31 @@ public class AppStoreUtil {
         return resultUrl;
     }
 
+    /**
+     * 图片压缩
+     * @param filePath 需要压缩的图片路径
+     * @return boolean 成功标识
+     */
+    public static boolean compressImage(String filePath) {
+        boolean resultFlag = false;
+        StringBuilder sbTmp = new StringBuilder();
+        String output;
+        String dirPath = filePath.substring(0, filePath.lastIndexOf("/"));
+        String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
+        // 定义要执行的命令
+        String command = "cd " + filePath.substring(0, filePath.lastIndexOf("/")) + "&& ffmpeg -y -i "+fileName+" -vf \"scale=108:108\" -q:v 2 -map_metadata -1 " + fileName;
+        try {
+            int exitCode = ConfigGeneratorUtils.executeShellCommand(sbTmp, command);
+            if (exitCode != 0) {
+                System.out.println("compressImage: Command failed with exit code: " + exitCode);
+            }
+            resultFlag = true;
+        } catch (IOException | InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
+        return resultFlag;
+    }
+
     public static void main(String[] args) {
         try {
             AppInfo appInfo = getAppInfo("哔哩哔哩", "CN");
