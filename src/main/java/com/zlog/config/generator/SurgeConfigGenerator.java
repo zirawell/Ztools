@@ -554,24 +554,8 @@ public class SurgeConfigGenerator {
         generateConfigDirectory(wechatAppletPaths);
         generateConfigDirectory(alipayAppletPaths);
         generateConfigDirectory(webPaths);
-
         generateOthers();
-        for(String path : appPaths){
-            String appName = path.substring(path.lastIndexOf("/")+1);
-            System.out.println(path + "," + "app," + appName);
-        }
-        for(String path : wechatAppletPaths){
-            String wechatAppletName = path.substring(path.lastIndexOf("/")+1);
-            System.out.println(path + "," + "wechatApplet," + wechatAppletName);
-        }
-        for(String path : alipayAppletPaths){
-            String alipayAppletName = path.substring(path.lastIndexOf("/")+1);
-            System.out.println(path + "," + "alipayApplet," + alipayAppletName);
-        }
-        for(String path : webPaths){
-            String webName = path.substring(path.lastIndexOf("/")+1);
-            System.out.println(path + "," + "web," + webName);
-        }
+
 
 
     }
