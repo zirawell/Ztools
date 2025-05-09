@@ -81,6 +81,8 @@ public class ConfigGeneratorConstants {
     public static final String SURGE_RULE_DIRECTORY = PROJECT_BASE_DIRECTORY + RULE_SIGN + FILE_SEPARATOR + SURGE_SIGN;
     public static final String ICON_DIRECTORY = PROJECT_BASE_DIRECTORY + RES_SIGN + FILE_SEPARATOR + ICON_SIGN;
     public static final String SCRIPTS_DIRECTORY = PROJECT_BASE_DIRECTORY + RES_SIGN + FILE_SEPARATOR + SCRIPTS_SIGN;
+
+    public static final String REF_DIC_PATH = "/Users/zirawell/Git/Ztools/src/main/java/com/zlog/config/generator/data/ref.dic";
     // Git分支
     public static final String GIT_BRANCH = ConfigGeneratorUtils.getBranchName();
     // GitHub base url prefix
