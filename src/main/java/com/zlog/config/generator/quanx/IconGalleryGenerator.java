@@ -1,7 +1,9 @@
-package com.zlog.config.generator;
+package com.zlog.config.generator.quanx;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.zlog.config.generator.constants.ConfigGeneratorConstants;
+import com.zlog.config.generator.utils.ConfigGeneratorUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,7 +81,7 @@ public class IconGalleryGenerator {
     /**
      * 生成订阅库json文件
      */
-    static void generateJsonFile() {
+    public static void generateJsonFile() {
         getIconFilePaths(new File(ConfigGeneratorConstants.ICON_DIRECTORY));
         allIconPaths.addAll(appIconPaths);
         allIconPaths.addAll(countryIconPaths);

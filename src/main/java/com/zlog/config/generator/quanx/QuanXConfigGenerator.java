@@ -1,5 +1,7 @@
-package com.zlog.config.generator;
+package com.zlog.config.generator.quanx;
 
+import com.zlog.config.generator.constants.ConfigGeneratorConstants;
+import com.zlog.config.generator.utils.ConfigGeneratorUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,6 +156,8 @@ public class QuanXConfigGenerator {
             generateRootReadMe();
             //generate Script Comment
             generateScriptComment();
+            //generate Icon Gallery
+            IconGalleryGenerator.generateJsonFile();
             //output the project url
             System.out.println("Project Homepage:\n" + GITHUB_BASE_URL);
         } catch (Exception e) {

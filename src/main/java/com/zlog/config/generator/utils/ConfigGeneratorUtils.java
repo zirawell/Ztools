@@ -1,5 +1,6 @@
-package com.zlog.config.generator;
+package com.zlog.config.generator.utils;
 
+import com.zlog.config.generator.constants.ConfigGeneratorConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

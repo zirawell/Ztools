@@ -1,4 +1,4 @@
-package com.zlog.config.generator;
+package com.zlog.config.generator.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;

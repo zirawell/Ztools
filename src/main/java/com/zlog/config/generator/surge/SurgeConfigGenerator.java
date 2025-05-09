@@ -1,5 +1,7 @@
-package com.zlog.config.generator;
+package com.zlog.config.generator.surge;
 
+import com.zlog.config.generator.constants.ConfigGeneratorConstants;
+import com.zlog.config.generator.utils.ConfigGeneratorUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

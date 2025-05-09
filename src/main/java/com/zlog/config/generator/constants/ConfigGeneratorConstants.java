@@ -1,4 +1,6 @@
-package com.zlog.config.generator;
+package com.zlog.config.generator.constants;
+
+import com.zlog.config.generator.utils.ConfigGeneratorUtils;
 
 /**
  * @Description: 配置文件常量
