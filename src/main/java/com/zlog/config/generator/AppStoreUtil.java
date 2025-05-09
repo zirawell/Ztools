@@ -73,7 +73,12 @@ public class AppStoreUtil {
         return new AppInfo(name, storeUrl, iconUrl, bundleId);
     }
 
-    public void downloadIcon(String savePath, String iconUrl) throws IOException {
+    /**
+     * 下载App图标
+     * @param savePath 保存路径
+     * @param iconUrl 图标链接
+     */
+    public static void downloadIcon(String savePath, String iconUrl) throws IOException {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpGet request = new HttpGet(iconUrl);
             try (CloseableHttpResponse response = httpClient.execute(request)) {
@@ -136,8 +141,10 @@ public class AppStoreUtil {
             } else {
                 System.out.println("未找到相关 App");
             }
+            downloadIcon("/Users/zirawell/Downloads/icon.png", appInfo.getIconUrl());
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
+         compressImage("/Users/zirawell/Downloads/icon.png");
     }
 }
