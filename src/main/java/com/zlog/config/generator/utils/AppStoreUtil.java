@@ -95,13 +95,15 @@ public class AppStoreUtil {
      * @param url 原始链接
      * @return String 简化后的链接
      */
-    public static String simplifyUrl(String url){
+    public static String simplifyUrl(String url, String countryCode){
         String resultUrl;
         int index1 = url.indexOf("/app/") + 4;
         int index2 = url.indexOf("/id");
-        resultUrl = url.replace(url.substring(index1, index2),"");
+        String removeStr = url.substring(index1, index2);
+        resultUrl = url.replace(removeStr,"");
         int index3 = resultUrl.indexOf("?uo=");
         resultUrl = resultUrl.substring(0,index3);
+        resultUrl = resultUrl.replace("/" + countryCode.toLowerCase(),"");
         return resultUrl;
     }
 
@@ -133,12 +135,30 @@ public class AppStoreUtil {
         }else{
             downloadIcon(downloadPath, appInfo.getIconUrl());
             compressImage(downloadPath);
-            return simplifyUrl(appInfo.getStoreUrl());
+            return simplifyUrl(appInfo.getStoreUrl(), countryCode);
         }
 
     }
 
+    public static AppInfo printAppInfo(String appName, String countryCode){
+        AppInfo appInfo = null;
+        try {
+            appInfo = getAppInfo(appName, countryCode);
+            if (appInfo != null) {
+                System.out.println("App 名称: " + appInfo.getName());
+                System.out.println("商店链接: " + appInfo.getStoreUrl());
+                System.out.println("图标链接: " + appInfo.getIconUrl());
+                System.out.println("Bundle ID: " + appInfo.getBundleId());
+            } else {
+                System.out.println("未找到相关 App");
+            }
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+        return appInfo;
+    }
+
     public static void main(String[] args) throws IOException {
-         getAppIconAndUrl("微信","/Users/zirawell/Downloads/icon.png","CN");
+        System.out.println(simplifyUrl(printAppInfo("微信", "CN").getStoreUrl(),"CN"));
     }
 }

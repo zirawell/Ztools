@@ -241,7 +241,7 @@ public class ConfigGeneratorConstants {
     public static final String SURGE_COMMENT_TITLE =
             "#!name=[#1]\n" +
             "#!desc=[#2]\n" +
-            "#!openUrl=https://apps.apple.com/app/id[#3]\n" +
+            "#!openUrl=[#3]\n" +
             "#!author=zirawell[https://github.com/zirawell]\n" +
             "#!tag=去广告\n" +
             "#!system=iOS\n" +
