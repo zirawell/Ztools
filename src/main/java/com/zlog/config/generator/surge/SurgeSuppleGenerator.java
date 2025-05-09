@@ -30,8 +30,9 @@ public class SurgeSuppleGenerator {
                     String[] split = line.split(",");
                     File dirPath = new File(split[0]);
                     String filePath = Objects.requireNonNull(dirPath.listFiles())[0].getAbsolutePath();
+                    String fileName = (filePath.substring(filePath.lastIndexOf("/")+1)).replace(ConfigGeneratorConstants.SURGE_MODULE_SIGN,"");
                     map.put("filePath", filePath);
-                    map.put("fileName", filePath.substring(filePath.lastIndexOf("/")+1));
+                    map.put("fileName", fileName);
                     map.put("type",split[1]);
                     map.put("appName",split[2]);
                     resultList.add(map);
@@ -45,10 +46,18 @@ public class SurgeSuppleGenerator {
 
     public static void generateCommentsAndIconsForAll(){
         List<Map<String,String>> dataList = initData();
-        System.out.println(dataList.size());
+        for(Map<String,String> dataMap:dataList){
+            String type = dataMap.get("type");
+            String filePath = dataMap.get("filePath");
+            String fileName = dataMap.get("fileName");
+            String appName = dataMap.get("appName");
+            if(type.equals("app")){
+                generateCommentsAndIconForApp(filePath, fileName, appName);
+            }
+        }
     }
 
-    public static void generateCommentsAndIconForApp(){
+    public static void generateCommentsAndIconForApp(String filePath, String fileName, String appName){
 
     }
 
