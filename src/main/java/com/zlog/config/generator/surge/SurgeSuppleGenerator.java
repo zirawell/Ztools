@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -98,9 +100,20 @@ public class SurgeSuppleGenerator {
      */
     public static boolean generateCommentsAndIconForApp(String surgeModulePath, String iconName, String appName){
         String downloadIconPath = APP_ICON_PATH + ConfigGeneratorConstants.FILE_SEPARATOR + iconName + ConfigGeneratorConstants.IMAGE_SIGN;
+
+        if(containsUpperCase(iconName)){
+            System.out.println(downloadIconPath);
+        }
         boolean resultFlag = false;
 
         return resultFlag;
+    }
+
+
+    public static boolean containsUpperCase(String str) {
+        Pattern pattern = Pattern.compile("[A-Z]");
+        Matcher matcher = pattern.matcher(str);
+        return matcher.find();
     }
 
 
