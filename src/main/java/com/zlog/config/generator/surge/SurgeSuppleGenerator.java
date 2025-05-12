@@ -1,6 +1,7 @@
 package com.zlog.config.generator.surge;
 
 import com.zlog.config.generator.constants.ConfigGeneratorConstants;
+import com.zlog.config.generator.utils.ConfigGeneratorUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -16,6 +17,9 @@ import java.util.stream.Collectors;
  **/
 public class SurgeSuppleGenerator {
     private static Set<String> SKIP_APP_SET = null;
+    private static String APP_ICON_PATH = ConfigGeneratorConstants.ICON_DIRECTORY
+                                        + ConfigGeneratorConstants.FILE_SEPARATOR
+                                        + ConfigGeneratorUtils.capitalizeFirstLetter(ConfigGeneratorConstants.APP_SIGN);
     public static void main(String[] args) {
         generateCommentsAndIconsForAll();
     }
@@ -70,12 +74,13 @@ public class SurgeSuppleGenerator {
 
     /**
      * 生成app的注释及图标
-     * @param filePath 需要生成注释的Surge模块文件路径
-     * @param fileName Surge模块文件名称
+     * @param surgeModulePath 需要生成注释的Surge模块文件路径
+     * @param iconName Surge模块文件名称->需要生成的icon名称
      * @param appName App名称
      * @return boolean 生成成功返回true,失败false
      */
-    public static boolean generateCommentsAndIconForApp(String filePath, String fileName, String appName){
+    public static boolean generateCommentsAndIconForApp(String surgeModulePath, String iconName, String appName){
+        String downloadIconPath = APP_ICON_PATH + ConfigGeneratorConstants.FILE_SEPARATOR + iconName + ConfigGeneratorConstants.IMAGE_SIGN;
         boolean resultFlag = false;
 
         return resultFlag;
