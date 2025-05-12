@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Description: 用于拉取图标及生成注释
@@ -14,11 +15,13 @@ import java.util.*;
  * @Create: 2025/5/9 17:07
  **/
 public class SurgeSuppleGenerator {
+    private static Set<String> SKIP_APP_SET = null;
     public static void main(String[] args) {
         generateCommentsAndIconsForAll();
     }
 
     public static List<Map<String,String>> initData(){
+        SKIP_APP_SET = Arrays.stream(ConfigGeneratorConstants.SKIP_APP).collect(Collectors.toSet());
         List<Map<String,String>> resultList = new ArrayList<>();
         File dicFile = new File(ConfigGeneratorConstants.REF_DIC_PATH);
         try (BufferedReader reader = new BufferedReader(new FileReader(dicFile))
@@ -45,20 +48,37 @@ public class SurgeSuppleGenerator {
     }
 
     public static void generateCommentsAndIconsForAll(){
+        // 初始化数据
         List<Map<String,String>> dataList = initData();
+        int totalCount = dataList.size();
+        int failCount = 0;
+        // 遍历集合，生成注释及图标
         for(Map<String,String> dataMap:dataList){
             String type = dataMap.get("type");
             String filePath = dataMap.get("filePath");
             String fileName = dataMap.get("fileName");
             String appName = dataMap.get("appName");
-            if(type.equals("app")){
-                generateCommentsAndIconForApp(filePath, fileName, appName);
+            if(type.equals("app") && !SKIP_APP_SET.contains(fileName)){
+                if (generateCommentsAndIconForApp(filePath, fileName, appName)){
+                    failCount++;
+                }
             }
         }
+        System.out.println("总计" + totalCount + "个App, 共计生成" + (totalCount-failCount) + "个app的注释及图标， 失败" + failCount + "个");
+
     }
 
-    public static void generateCommentsAndIconForApp(String filePath, String fileName, String appName){
+    /**
+     * 生成app的注释及图标
+     * @param filePath 需要生成注释的Surge模块文件路径
+     * @param fileName Surge模块文件名称
+     * @param appName App名称
+     * @return boolean 生成成功返回true,失败false
+     */
+    public static boolean generateCommentsAndIconForApp(String filePath, String fileName, String appName){
+        boolean resultFlag = false;
 
+        return resultFlag;
     }
 
 
