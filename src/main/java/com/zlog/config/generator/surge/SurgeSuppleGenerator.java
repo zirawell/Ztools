@@ -25,7 +25,6 @@ public class SurgeSuppleGenerator {
     }
 
     public static List<Map<String,String>> initData(){
-        SKIP_APP_SET = Arrays.stream(ConfigGeneratorConstants.SKIP_APP).collect(Collectors.toSet());
         List<Map<String,String>> resultList = new ArrayList<>();
         File dicFile = new File(ConfigGeneratorConstants.REF_DIC_PATH);
         try (BufferedReader reader = new BufferedReader(new FileReader(dicFile))
@@ -53,6 +52,7 @@ public class SurgeSuppleGenerator {
 
     public static void generateCommentsAndIconsForAll(){
         // 初始化数据
+        initSkipAppSet();
         List<Map<String,String>> dataList = initData();
         int totalCount = dataList.size();
         int failCount = 0;
@@ -70,6 +70,23 @@ public class SurgeSuppleGenerator {
         }
         System.out.println("总计" + totalCount + "个App, 共计生成" + (totalCount-failCount) + "个app的注释及图标， 失败" + failCount + "个");
 
+    }
+
+    /**
+     * 初始化需要跳过的App集合，包括Constants.SKIP_APP
+     * 以及/Users/zirawell/Git/R-Store/Res/Icon/App下已经存在的图标
+     */
+    private static void initSkipAppSet() {
+        SKIP_APP_SET = Arrays.stream(ConfigGeneratorConstants.SKIP_APP).collect(Collectors.toSet());
+        File iconDir = new File(APP_ICON_PATH);
+        if (iconDir.exists() && iconDir.isDirectory()){
+            File[] iconFiles = iconDir.listFiles();
+            if (iconFiles != null){
+                for (File iconFile:iconFiles){
+                    SKIP_APP_SET.add(iconFile.getName().replace(ConfigGeneratorConstants.IMAGE_SIGN,""));
+                }
+            }
+        }
     }
 
     /**
