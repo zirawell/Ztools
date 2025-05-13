@@ -51,7 +51,7 @@ public class SurgeConfigGenerator {
                         tmpAppPaths.add(subFile.getAbsolutePath());
                     }else{
                         if(subFile.delete()){
-                            System.out.println(subFile.getAbsolutePath() + " has been deleted!");
+                            logger.info(subFile.getAbsolutePath() + " has been deleted!");
                         }
                     }
                     // 寻找含有README.md的Adblock目录
@@ -190,7 +190,7 @@ public class SurgeConfigGenerator {
      *
      * @param path QuanX配置文件父目录
      */
-    private static void generateConfigFile(String path) {
+    private static void generateConfigFile(String path) throws IOException {
         File originDir = new File(path);
         String generatedConfigPath;
         File[] subFiles = originDir.listFiles();
@@ -203,9 +203,15 @@ public class SurgeConfigGenerator {
                 // 打印文件路径
                 //System.out.println(path);
                 if (rewriteDir.exists() && Objects.requireNonNull(rewriteDir.listFiles()).length > 0) {
+                    if(Objects.requireNonNull(rewriteDir.listFiles()).length > 1){
+                        throw new IOException("Error: " + rewriteDir.getAbsolutePath() + " contains more than one rewrite file");
+                    }
                     stopFlag = processRewriteContent(Objects.requireNonNull(rewriteDir.listFiles())[0]);
                 }
                 if (filterDir.exists() && Objects.requireNonNull(filterDir.listFiles()).length > 0 && !stopFlag) {
+                    if(Objects.requireNonNull(filterDir.listFiles()).length > 1){
+                        throw new IOException("Error: " + filterDir.getAbsolutePath() + " contains more than one filter file");
+                    }
                     processFilterContent(Objects.requireNonNull(filterDir.listFiles())[0], false);
                 }
                 // 输出Surge配置文件

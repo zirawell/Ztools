@@ -103,7 +103,7 @@ public class SurgeSuppleGenerator {
         String downloadIconPath = APP_ICON_PATH + ConfigGeneratorConstants.FILE_SEPARATOR + iconName + ConfigGeneratorConstants.IMAGE_SIGN;
 
         if(containsUpperCase(iconName)){
-            System.out.println(downloadIconPath);
+            System.out.println("downloadIconPath: " + downloadIconPath);
         }
         boolean resultFlag = false;
 
