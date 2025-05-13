@@ -1,13 +1,13 @@
 package com.zlog.config.generator.surge;
 
 import com.zlog.config.generator.constants.ConfigGeneratorConstants;
-import com.zlog.config.generator.utils.AppStoreUtil;
 import com.zlog.config.generator.utils.ConfigGeneratorUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -103,8 +103,18 @@ public class SurgeSuppleGenerator {
     public static boolean generateCommentsAndIconForApp(String surgeModulePath, String iconName, String appName) throws IOException {
         String downloadIconPath = APP_ICON_PATH + ConfigGeneratorConstants.FILE_SEPARATOR + iconName + ConfigGeneratorConstants.IMAGE_SIGN;
         boolean resultFlag = false;
-        String appStoreUrl = AppStoreUtil.getAppIconAndUrl(appName, downloadIconPath, "CN");
+        //String appStoreUrl = AppStoreUtil.getAppIconAndUrl(appName, downloadIconPath, "CN");
+        String moduleName = ConfigGeneratorUtils.getFileName(surgeModulePath);
+        String desc = appName + "去广告";
+        String openUrl = "testUrl";
+        String titleComment = ConfigGeneratorConstants.SURGE_COMMENT_TITLE
+                .replace("[#1]",moduleName)
+                .replace("[#2]",desc)
+                .replace("[#3]",openUrl)
+                .replace("[#4]",iconName)
+                .replace("[#5]",new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 
+        System.out.println(titleComment);
 
 
         return resultFlag;
