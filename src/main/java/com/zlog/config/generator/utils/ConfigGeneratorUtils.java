@@ -301,6 +301,19 @@ public class ConfigGeneratorUtils {
         return !result;
     }
 
+    public static String getFirstLine(String filePath) {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(filePath));
+            String firstLine = reader.readLine();
+            reader.close();
+            return firstLine;
+        } catch (IOException e) {
+            logger.error(e.getMessage());
+            return null;
+        }
+
+    }
+
 
 
 }

@@ -1,6 +1,7 @@
 package com.zlog.config.generator.surge;
 
 import com.zlog.config.generator.constants.ConfigGeneratorConstants;
+import com.zlog.config.generator.utils.AppStoreUtil;
 import com.zlog.config.generator.utils.ConfigGeneratorUtils;
 
 import java.io.BufferedReader;
@@ -22,7 +23,7 @@ public class SurgeSuppleGenerator {
     private static String APP_ICON_PATH = ConfigGeneratorConstants.ICON_DIRECTORY
                                         + ConfigGeneratorConstants.FILE_SEPARATOR
                                         + ConfigGeneratorUtils.capitalizeFirstLetter(ConfigGeneratorConstants.APP_SIGN);
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         generateCommentsAndIconsForAll();
     }
 
@@ -53,7 +54,7 @@ public class SurgeSuppleGenerator {
         return resultList;
     }
 
-    public static void generateCommentsAndIconsForAll(){
+    public static void generateCommentsAndIconsForAll() throws IOException {
         // 初始化数据
         initSkipAppSet();
         List<Map<String,String>> dataList = initData();
@@ -66,7 +67,7 @@ public class SurgeSuppleGenerator {
             String fileName = dataMap.get("fileName");
             String appName = dataMap.get("appName");
             if(type.equals("app") && !SKIP_APP_SET.contains(fileName)){
-                if (generateCommentsAndIconForApp(filePath, fileName, appName)){
+                if (!generateCommentsAndIconForApp(filePath, fileName, appName)){
                     failCount++;
                 }
             }
@@ -99,13 +100,12 @@ public class SurgeSuppleGenerator {
      * @param appName App名称
      * @return boolean 生成成功返回true,失败false
      */
-    public static boolean generateCommentsAndIconForApp(String surgeModulePath, String iconName, String appName){
+    public static boolean generateCommentsAndIconForApp(String surgeModulePath, String iconName, String appName) throws IOException {
         String downloadIconPath = APP_ICON_PATH + ConfigGeneratorConstants.FILE_SEPARATOR + iconName + ConfigGeneratorConstants.IMAGE_SIGN;
-
-        if(containsUpperCase(iconName)){
-            System.out.println("downloadIconPath: " + downloadIconPath);
-        }
         boolean resultFlag = false;
+        String appStoreUrl = AppStoreUtil.getAppIconAndUrl(appName, downloadIconPath, "CN");
+
+
 
         return resultFlag;
     }
