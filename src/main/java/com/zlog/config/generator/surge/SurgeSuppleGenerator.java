@@ -106,9 +106,10 @@ public class SurgeSuppleGenerator {
         String downloadIconPath = APP_ICON_PATH + ConfigGeneratorConstants.FILE_SEPARATOR + iconName + ConfigGeneratorConstants.IMAGE_SIGN;
         boolean resultFlag = false;
         //String appStoreUrl = AppStoreUtil.getAppIconAndUrl(appName, downloadIconPath, "CN");
-        String moduleName = ConfigGeneratorUtils.getFileName(surgeModulePath);
+        String moduleName = ConfigGeneratorUtils.getFirstLine(surgeModulePath).replace("# > ","");
         String desc = appName + "去广告";
         String openUrl = "testUrl";
+        assert moduleName != null;
         String titleComment = ConfigGeneratorConstants.SURGE_COMMENT_TITLE
                 .replace("[#1]",moduleName)
                 .replace("[#2]",desc)
