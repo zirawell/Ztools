@@ -66,7 +66,9 @@ public class SurgeSuppleGenerator {
             String filePath = dataMap.get("filePath");
             String fileName = dataMap.get("fileName");
             String appName = dataMap.get("appName");
-            if(type.equals("app") && !SKIP_APP_SET.contains(fileName)){
+            if(type.equals("app")
+                    && !filePath.contains("/#/")
+                    && !SKIP_APP_SET.contains(fileName)){
                 if (!generateCommentsAndIconForApp(filePath, fileName, appName)){
                     failCount++;
                 }

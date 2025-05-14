@@ -558,14 +558,45 @@ public class SurgeConfigGenerator {
 
     public static void main(String[] args) throws IOException {
         getOriginalFilePaths(quanXRuleDir);
+        initRefDic();
         generateConfigDirectory(appPaths);
         generateConfigDirectory(wechatAppletPaths);
         generateConfigDirectory(alipayAppletPaths);
         generateConfigDirectory(webPaths);
         generateOthers();
+        
 
 
+    }
 
+    private static void initRefDic() {
+        File outputFile = new File(ConfigGeneratorConstants.REF_DIC_PATH);
+        ConfigGeneratorUtils.writeToFile(outputFile,"#!desc:path,type(app/wechatApplet/alipayApplet/web),name,id\n", false);
+        for(String appPath : appPaths){
+            appPath = appPath.replace(ConfigGeneratorConstants.QUANX_SIGN,ConfigGeneratorConstants.SURGE_SIGN);
+            String content = appPath + ",app," + appPath.substring(appPath.lastIndexOf("/")+1);
+            ConfigGeneratorUtils.writeToFile(outputFile,content + "\n", true);
+        }
+        for(String wechatAppletPath : wechatAppletPaths){
+            wechatAppletPath = wechatAppletPath.replace(ConfigGeneratorConstants.QUANX_SIGN,ConfigGeneratorConstants.SURGE_SIGN);
+            String content = wechatAppletPath + ",wechatApplet," + wechatAppletPath.substring(wechatAppletPath.lastIndexOf("/")+1);
+            ConfigGeneratorUtils.writeToFile(outputFile,content + "\n", true);
+        }
+        for(String alipayAppletPath : alipayAppletPaths){
+            alipayAppletPath = alipayAppletPath.replace(ConfigGeneratorConstants.QUANX_SIGN,ConfigGeneratorConstants.SURGE_SIGN);
+            String content = alipayAppletPath + ",alipayApplet," + alipayAppletPath.substring(alipayAppletPath.lastIndexOf("/")+1);
+            ConfigGeneratorUtils.writeToFile(outputFile,content + "\n", true);
+        }
+        for(int i=0; i < webPaths.size(); i++){
+            String webPath = webPaths.toArray(new String[0])[i];
+            webPath = webPath.replace(ConfigGeneratorConstants.QUANX_SIGN,ConfigGeneratorConstants.SURGE_SIGN);
+            String content = webPath + ",web," + webPath.substring(webPath.lastIndexOf("/")+1);
+            if(i == webPaths.size()-1){
+                ConfigGeneratorUtils.writeToFile(outputFile,content, true);
+            }else {
+                ConfigGeneratorUtils.writeToFile(outputFile, content + "\n", true);
+            }
+        }
     }
 
     /**
