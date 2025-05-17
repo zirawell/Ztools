@@ -465,6 +465,10 @@ public class SurgeConfigGenerator {
             default:
                 break;
         }
+        assert line != null;
+        if (line.contains("pattern=;^https?:\\/\\/")) {
+            line = ";" + line.replace("pattern=;^https?:\\/\\/", "pattern=^https?:\\/\\/");
+        }
         return line;
     }
 
