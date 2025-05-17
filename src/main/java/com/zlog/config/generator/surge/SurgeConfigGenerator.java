@@ -51,7 +51,7 @@ public class SurgeConfigGenerator {
                         tmpAppPaths.add(subFile.getAbsolutePath());
                     }else{
                         if(subFile.delete()){
-                            logger.info(subFile.getAbsolutePath() + " has been deleted!");
+                            logger.info("{} has been deleted!", subFile.getAbsolutePath());
                         }
                     }
                     // 寻找含有README.md的Adblock目录
